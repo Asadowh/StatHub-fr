@@ -3,3 +3,4 @@ C:\Users\vaqif\Downloads\StatHub-frontend-mainX\StatHub-frontend-main
 
 Last update: Fixed "failed to fetch" error in login by adding proper error handling in apiFetch function.
 
+
