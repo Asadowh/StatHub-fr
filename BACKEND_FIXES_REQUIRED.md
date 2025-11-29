@@ -258,3 +258,4 @@ After making these changes:
 - The frontend already sends category in FormData, so once backend accepts it, it should work
 - The cascade delete ensures no orphaned comments remain in the database
 
+
