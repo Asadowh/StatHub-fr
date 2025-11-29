@@ -10,6 +10,7 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  resendVerificationEmail: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -94,9 +95,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
-    // This would need a backend endpoint - for now just return success
-    // TODO: Implement when backend has change password endpoint
-    return { success: false, error: 'Not implemented yet' };
+    try {
+      await authApi.changePassword(currentPassword, newPassword);
+      // Logout user after password change to force re-login
+      logout();
+      return { success: true };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to change password' 
+      };
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    await authApi.resendVerificationEmail();
+    // Refresh user data after resending
+    await refreshUser();
   };
 
   return (
@@ -110,6 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         resetPassword,
         changePassword,
+        resendVerificationEmail,
         refreshUser,
       }}
     >

@@ -13,10 +13,12 @@ import Trophies from "./pages/Trophies";
 import Matches from "./pages/Matches";
 import Profile from "./pages/Profile";
 import News from "./pages/News";
+import CreatePost from "./pages/CreatePost";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import StatHubRanking from "./pages/StatHubRanking";
 import NotFound from "./pages/NotFound";
 import { Navigation } from "./components/Navigation";
@@ -36,6 +38,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-email" element={<ProtectedRoute><VerifyEmail /></ProtectedRoute>} />
             
             {/* Protected routes */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
@@ -46,6 +49,7 @@ const App = () => (
             <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/news" element={<ProtectedRoute><News /></ProtectedRoute>} />
+            <Route path="/news/create" element={<CreatePost />} />
             <Route path="/stathub-ranking" element={<ProtectedRoute><StatHubRanking /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             

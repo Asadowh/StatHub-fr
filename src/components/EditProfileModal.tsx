@@ -400,17 +400,12 @@ export const EditProfileModal = ({ profileData, onSave }: EditProfileModalProps)
                 <SelectItem value="RB">RB - Right Back</SelectItem>
                 <SelectItem value="CB">CB - Center Back</SelectItem>
                 <SelectItem value="LB">LB - Left Back</SelectItem>
-                <SelectItem value="RWB">RWB - Right Wing Back</SelectItem>
-                <SelectItem value="LWB">LWB - Left Wing Back</SelectItem>
                 <SelectItem value="CDM">CDM - Defensive Midfielder</SelectItem>
                 <SelectItem value="CM">CM - Center Midfielder</SelectItem>
                 <SelectItem value="CAM">CAM - Attacking Midfielder</SelectItem>
-                <SelectItem value="RM">RM - Right Midfielder</SelectItem>
-                <SelectItem value="LM">LM - Left Midfielder</SelectItem>
                 <SelectItem value="RW">RW - Right Winger</SelectItem>
                 <SelectItem value="LW">LW - Left Winger</SelectItem>
                 <SelectItem value="ST">ST - Striker</SelectItem>
-                <SelectItem value="CF">CF - Center Forward</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,6 +1,6 @@
 // API Client for StatHub Backend
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Token management
 const getToken = () => localStorage.getItem('stathub_token');
@@ -28,17 +28,53 @@ async function apiFetch<T>(
     (headers as Record<string, string>)['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(error.detail || 'Request failed');
+    if (!response.ok) {
+      let errorMessage = 'Request failed';
+      try {
+        const error = await response.json();
+        errorMessage = error.detail || error.message || JSON.stringify(error);
+      } catch {
+        // If response is not JSON, try to get text
+        try {
+          const text = await response.text();
+          errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    // Handle empty responses (e.g., DELETE requests with 204 No Content)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return undefined as T;
+    }
+
+    // Try to parse JSON, but handle empty responses gracefully
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+    
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return undefined as T;
+    }
+  } catch (error) {
+    // Handle network errors (backend not running, CORS, etc.)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Failed to connect to server. Please make sure the backend is running on http://localhost:8000');
+    }
+    // Re-throw other errors
+    throw error;
   }
-
-  return response.json();
 }
 
 // ============================================
@@ -76,14 +112,44 @@ export const authApi = {
   async forgotPassword(email: string) {
     return apiFetch('/auth/forgot-password', {
       method: 'POST',
-      body: JSON.stringify(email),
+      body: JSON.stringify({ email }),
     });
   },
 
-  async resetPassword(token: string, newPassword: string) {
+  async validateResetCode(email: string, code: string) {
+    return apiFetch<{ message: string; valid: boolean }>('/auth/validate-reset-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  },
+
+  async resetPassword(email: string, code: string, newPassword: string) {
     return apiFetch('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token, new_password: newPassword }),
+      body: JSON.stringify({ email, code, new_password: newPassword }),
+    });
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    return apiFetch<void>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        current_password: currentPassword, 
+        new_password: newPassword 
+      }),
+    });
+  },
+
+  async resendVerificationEmail(): Promise<void> {
+    return apiFetch<void>('/auth/resend-verification', {
+      method: 'POST',
+    });
+  },
+
+  async verifyEmail(code: string): Promise<void> {
+    return apiFetch<void>('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
     });
   },
 
@@ -255,9 +321,10 @@ export interface LeaderboardPlayer {
   matches_played: number;
   trophy_count?: number;
   achievement_count?: number;
-  xp: number;
-  level: number;
+  xp?: number;
+  level?: number;
   points?: number;  // Kept for backward compatibility
+  combined?: number;  // Goals + Assists
 }
 
 export const leaderboardApi = {
@@ -286,6 +353,11 @@ export const leaderboardApi = {
 
   async getUserTrophyRank(userId: number): Promise<LeaderboardPlayer> {
     return apiFetch<LeaderboardPlayer>(`/leaderboard/trophies/user/${userId}`);
+  },
+
+  // StatHub Ranking (by rating, goals, assists, or combined)
+  async getStatHubRanking(sortBy: "rating" | "goals" | "assists" | "combined" = "rating", limit = 50): Promise<LeaderboardPlayer[]> {
+    return apiFetch<LeaderboardPlayer[]>(`/leaderboard/stathub-ranking?sort_by=${sortBy}&limit=${limit}`);
   },
 };
 
@@ -342,8 +414,10 @@ export interface NewsPost {
   id: number;
   title: string;
   content: string;
+  image_url: string | null;
   author_id: number;
   created_at: string;
+  category?: string | null;
 }
 
 export const newsApi = {
@@ -351,11 +425,93 @@ export const newsApi = {
     return apiFetch<NewsPost[]>('/news/');
   },
 
-  async create(data: { title: string; content: string }): Promise<NewsPost> {
-    return apiFetch<NewsPost>('/news/', {
+  async create(formData: FormData): Promise<NewsPost> {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/news/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to create post' }));
+      throw new Error(error.detail || 'Failed to create post');
+    }
+
+    return response.json();
+  },
+
+  async delete(postId: number): Promise<void> {
+    return apiFetch<void>(`/news/${postId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============================================
+// COMMENTS API
+// ============================================
+export interface Comment {
+  id: number;
+  content: string;
+  author_id: number;
+  news_id: number | null;
+  match_id: number | null;
+  created_at: string;
+}
+
+export const commentApi = {
+  async getNewsComments(newsId: number): Promise<Comment[]> {
+    return apiFetch<Comment[]>(`/comments/news/${newsId}`);
+  },
+
+  async create(data: { content: string; news_id?: number; match_id?: number }): Promise<Comment> {
+    return apiFetch<Comment>('/comments/', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  async delete(commentId: number): Promise<void> {
+    return apiFetch<void>(`/comments/${commentId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============================================
+// REACTIONS API
+// ============================================
+export interface Reaction {
+  id: number;
+  type: string;
+  user_id: number;
+  news_id: number | null;
+  comment_id: number | null;
+  match_id: number | null;
+  created_at: string;
+}
+
+export interface ReactionCounts {
+  [type: string]: number;
+}
+
+export const reactionApi = {
+  async toggle(data: { type: string; news_id?: number; comment_id?: number; match_id?: number }): Promise<{ reaction: Reaction | null; action: 'added' | 'removed' }> {
+    return apiFetch<{ reaction: Reaction | null; action: 'added' | 'removed' }>('/reactions/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getNewsReactionCounts(newsId: number): Promise<ReactionCounts> {
+    return apiFetch<ReactionCounts>(`/reactions/news/${newsId}/counts`);
+  },
+
+  async getUserReactionsForNews(newsId: number, userId: number): Promise<{ reactions: string[] }> {
+    return apiFetch<{ reactions: string[] }>(`/reactions/news/${newsId}/user/${userId}`);
   },
 };
 

@@ -85,22 +85,34 @@ const Matches = () => {
         </div>
 
         {/* No Upcoming Match Banner */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50">
-          <div className="relative">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1923&auto=format&fit=crop')] bg-cover bg-center opacity-20" />
-            <div className="relative p-12 text-center">
-              <div className="w-full max-w-md mx-auto mb-6 rounded-lg overflow-hidden shadow-lg">
-                <img 
-                  src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1923&auto=format&fit=crop" 
-                  alt="Football field" 
-                  className="w-full h-48 object-cover"
-                />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">No future games scheduled yet.</h2>
-              <p className="text-muted-foreground">Check back later for upcoming match announcements.</p>
-            </div>
-          </div>
-        </Card>
+      {/* No Upcoming Match Banner */}
+<Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50">
+  <div className="relative h-80 w-full overflow-hidden rounded-lg">
+    
+    {/* FULL BACKGROUND IMAGE */}
+    <div 
+      className="absolute inset-0 bg-cover bg-center"
+      style={{ backgroundImage: "url('/stadium.jpg')" }}
+    />
+
+    {/* DARK OVERLAY FOR READABILITY */}
+    <div className="absolute inset-0 bg-black/50" />
+
+    {/* TEXT OVER THE IMAGE */}
+    <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6">
+      <h2 className="text-3xl font-bold text-white mb-3">
+        No future games scheduled yet.
+      </h2>
+      <p className="text-white/80 text-lg">
+        Check back later for upcoming match announcements.
+      </p>
+    </div>
+
+  </div>
+</Card>
+
+
+
 
         {/* Filters */}
         <div className="flex gap-2 flex-wrap justify-center md:justify-start">

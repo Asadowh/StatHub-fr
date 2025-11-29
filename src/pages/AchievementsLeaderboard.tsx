@@ -25,7 +25,8 @@ const AchievementsLeaderboard = () => {
   const loadLeaderboard = async () => {
     try {
       setIsLoading(true);
-      const data = await leaderboardApi.getAchievementsLeaderboard(100);
+      // Request a high limit to get all players
+      const data = await leaderboardApi.getAchievementsLeaderboard(1000);
       setPlayers(data);
     } catch (error) {
       console.error("Failed to load achievements leaderboard:", error);

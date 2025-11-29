@@ -26,7 +26,8 @@ const Leaderboard = () => {
   const loadLeaderboard = async () => {
     try {
       setIsLoading(true);
-      const data = await leaderboardApi.getLeaderboard(100);
+      // Request a high limit to get all players, including those with 0 XP
+      const data = await leaderboardApi.getLeaderboard(1000);
       setPlayers(data);
     } catch (error) {
       console.error("Failed to load leaderboard:", error);

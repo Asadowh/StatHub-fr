@@ -3,14 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Settings as SettingsIcon, User, Shield, LogOut, Mail, Smartphone } from "lucide-react";
+import { Settings as SettingsIcon, User, Shield, LogOut, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatHeight } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { authApi } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import {
   Form,
@@ -41,8 +41,6 @@ const Settings = () => {
   const { user, logout, changePassword } = useAuth();
   const navigate = useNavigate();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [show2FASetup, setShow2FASetup] = useState(false);
 
   const form = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -72,11 +70,17 @@ const Settings = () => {
 
     toast({
       title: "✅ Password Changed Successfully!",
-      description: "Your password has been updated securely.",
-      duration: 4000,
+      description: "Your password has been updated. Please log in again with your new password.",
+      duration: 5000,
     });
     form.reset();
     setIsChangingPassword(false);
+    
+    // User will be logged out automatically by changePassword function
+    // Wait a moment then redirect to login
+    setTimeout(() => {
+      navigate("/login");
+    }, 2000);
   };
 
   const handleCancelPasswordChange = () => {
@@ -93,34 +97,22 @@ const Settings = () => {
     navigate("/login");
   };
 
-  const handleToggle2FA = () => {
-    if (!twoFactorEnabled) {
-      setShow2FASetup(true);
-    } else {
-      setTwoFactorEnabled(false);
+  const handleSendVerification = async () => {
+    try {
+      await authApi.resendVerificationEmail();
       toast({
-        title: "2FA Disabled",
-        description: "Two-factor authentication has been turned off.",
+        title: "📧 Verification Email Sent",
+        description: "Please check your inbox and click the verification link.",
+        duration: 4000,
+      });
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error instanceof Error ? error.message : "Failed to send verification email",
+        variant: "destructive",
+        duration: 4000,
       });
     }
-  };
-
-  const handleEnable2FA = () => {
-    setTwoFactorEnabled(true);
-    setShow2FASetup(false);
-    toast({
-      title: "✅ 2FA Enabled!",
-      description: "Two-factor authentication is now active for your account.",
-      duration: 4000,
-    });
-  };
-
-  const handleSendVerification = () => {
-    toast({
-      title: "📧 Verification Email Sent",
-      description: "Please check your inbox and click the verification link.",
-      duration: 4000,
-    });
   };
 
   return (
@@ -318,58 +310,6 @@ const Settings = () => {
                 <Button onClick={handleSendVerification} size="sm">
                   Send Verification Link
                 </Button>
-              )}
-            </div>
-
-            {/* Two-Factor Authentication */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/50">
-                <div className="flex items-center gap-3">
-                  <Smartphone className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="font-semibold">Two-Factor Authentication</p>
-                    <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={twoFactorEnabled}
-                  onCheckedChange={handleToggle2FA}
-                />
-              </div>
-
-              {/* 2FA Setup Modal */}
-              {show2FASetup && (
-                <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 space-y-4 animate-fade-in">
-                  <h3 className="font-bold text-lg">Enable Two-Factor Authentication</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.) or manually enter the code.
-                  </p>
-                  
-                  {/* Mock QR Code */}
-                  <div className="flex justify-center p-6 bg-white rounded-lg">
-                    <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                      [QR Code Placeholder]
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Manual Setup Code</Label>
-                    <div className="px-3 py-2 bg-background border border-border rounded-md text-foreground font-mono text-sm cursor-default">
-                      ABCD EFGH IJKL MNOP
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 justify-end">
-                    <Button variant="outline" onClick={() => setShow2FASetup(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleEnable2FA}>
-                      Verify & Enable
-                    </Button>
-                  </div>
-                </div>
               )}
             </div>
           </div>

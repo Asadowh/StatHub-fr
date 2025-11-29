@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Trophy, Award, BarChart3 } from "lucide-react";
 
 const actions = [
   { 
@@ -12,14 +12,6 @@ const actions = [
     iconColor: "text-primary"
   },
   { 
-    title: "Achievements", 
-    description: "Ranked by achievements unlocked", 
-    icon: Medal, 
-    path: "/achievements-leaderboard",
-    gradient: "from-blue-500/10 to-cyan-500/10",
-    iconColor: "text-blue-400"
-  },
-  { 
     title: "Trophies", 
     description: "Ranked by trophies earned", 
     icon: Award, 
@@ -27,6 +19,14 @@ const actions = [
     gradient: "from-yellow-400/15 to-amber-400/15",
     iconColor: "text-yellow-400",
     glow: true
+  },
+  { 
+    title: "StatHub Ranking", 
+    description: "Compare top player stats", 
+    icon: BarChart3, 
+    path: "/stathub-ranking",
+    gradient: "from-blue-500/10 to-cyan-500/10",
+    iconColor: "text-blue-400"
   },
 ];
 
